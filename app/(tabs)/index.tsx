@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useRef } from "react";
 import {
   Image,
   StyleSheet,
@@ -22,8 +22,22 @@ import {
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/Colors";
+import Header from "@/components/Header";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 
 export default function HomeScreen() {
+  // ref
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+  // callbacks
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.present();
+  }, []);
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log("handleSheetChanges", index);
+  }, []);
+
   const getColor = (value: number) => {
     if (value < 20) return "yellow";
     else if (value >= 25 && value < 35) return "orange";
@@ -91,24 +105,7 @@ export default function HomeScreen() {
         paddingVertical: 10,
       }}
     >
-      {/* Header section */}
-      <View style={styles.headerContainer}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingEnd: 20,
-          }}
-        >
-          <Ionicons name="menu" size={34} color="purple" />
-          <View>
-            <Text style={styles.headerText}>Milika's Monitor</Text>
-            <Text style={styles.subText}>A healthy me makes mom happy</Text>
-          </View>
-        </View>
-        <View style={{ height: 1, backgroundColor: "#e5e5e5" }}></View>
-      </View>
+      <Header />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Gradient Section */}
         <LinearGradient
