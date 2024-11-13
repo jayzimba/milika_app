@@ -1,16 +1,22 @@
-# Welcome to your Expo app 👋
+# Welcome to your React Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
+##Ensure you have Node js iinstalled on your machine
+##And download 'Expo go' on your phone from playstore or app store - this will allow you to run the application on your phone and preview its screens
 ## Get started
 
-1. Install dependencies
-
+1. Clone the project
+   clone the project repository to your computer
+   
+3. Install dependencies
+   Open the project in vscode then access th terminal
+   
+ then run the following commands:
    ```bash
    npm install
    ```
 
-2. Start the app
+4. Start the app
 
    ```bash
     npx expo start
