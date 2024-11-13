@@ -1,15 +1,69 @@
+import React, { useState } from "react";
 import Header from "@/components/Header";
 import {
-  Image,
   StyleSheet,
-  Platform,
   View,
   Text,
   SafeAreaView,
+  Button,
+  Alert,
+  ScrollView,
+  TouchableOpacity,
 } from "react-native";
-import { Colors } from "react-native/Libraries/NewAppScreen";
+import { Picker } from "@react-native-picker/picker";
 
 export default function LogScreen() {
+  // State variables for each input field
+  const [age, setAge] = useState("0");
+  const [fever, setFever] = useState("0");
+  const [cough, setCough] = useState("0");
+  const [fatigue, setFatigue] = useState("0");
+  const [headache, setHeadache] = useState("0");
+  const [breathingDifficulty, setBreathingDifficulty] = useState("0");
+  const [chestPain, setChestPain] = useState("0");
+  const [muscleStiffness, setMuscleStiffness] = useState("0");
+  const [pain, setPain] = useState("0");
+  const [seizures, setSeizures] = useState("0");
+  const [fatigueCp, setFatigueCp] = useState("0");
+  const [breathingDifficultyCp, setBreathingDifficultyCp] = useState("0");
+
+  // Function to handle form submission
+  const handleSubmit = () => {
+    const data = {
+      age: parseFloat(age),
+      fever: parseFloat(fever),
+      cough: parseFloat(cough),
+      fatigue: parseFloat(fatigue),
+      headache: parseFloat(headache),
+      breathing_difficulty: parseFloat(breathingDifficulty),
+      chest_pain: parseFloat(chestPain),
+      muscle_stiffness: parseFloat(muscleStiffness),
+      pain: parseFloat(pain),
+      seizures: parseFloat(seizures),
+      fatigue_cp: parseFloat(fatigueCp),
+      breathing_difficulty_cp: parseFloat(breathingDifficultyCp),
+    };
+
+    fetch("http://localhost:5000/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => response.json())
+      .then((responseData) => {
+        Alert.alert(
+          "Prediction",
+          `Diagnosis: ${responseData.diagnosis}\nSeverity: ${responseData.severity}`
+        );
+      })
+      .catch((error) => {
+        Alert.alert("Error", "Failed to get prediction. Please try again.");
+        console.error(error);
+      });
+  };
+
   return (
     <SafeAreaView style={{ backgroundColor: "#fff", flex: 1 }}>
       <Header />
@@ -18,50 +72,176 @@ export default function LogScreen() {
           <Text style={{ fontWeight: "bold", marginBottom: 20 }}>
             How is your child performing today?
           </Text>
-
-          <View>
-            <Text
-              style={{
-                fontSize: 12,
-                color: Colors.light.icon,
-                fontWeight: "400",
-              }}
-            >
-              
-              Complete the form below to get predictions and recommendations for
-              your child.
-            </Text>
-          </View>
+          <Text style={{ fontSize: 12, color: "#666", fontWeight: "400" }}>
+            Complete the form below to get predictions and recommendations for
+            your child.
+          </Text>
         </View>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Form Inputs using Picker */}
+          <View style={styles.form}>
+            <Text style={styles.label}>Age</Text>
+            <Picker
+              selectedValue={age}
+              onValueChange={(value) => setAge(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select Age" value="0" />
+              <Picker.Item label="1-5 years" value="3" />
+              <Picker.Item label="6-10 years" value="8" />
+              <Picker.Item label="11-15 years" value="13" />
+              <Picker.Item label="16+ years" value="16" />
+            </Picker>
+
+            <Text style={styles.label}>Fever</Text>
+            <Picker
+              selectedValue={fever}
+              onValueChange={(value) => setFever(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Cough</Text>
+            <Picker
+              selectedValue={cough}
+              onValueChange={(value) => setCough(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            {/* Repeat Picker for other inputs */}
+            <Text style={styles.label}>Fatigue</Text>
+            <Picker
+              selectedValue={fatigue}
+              onValueChange={(value) => setFatigue(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Headache</Text>
+            <Picker
+              selectedValue={headache}
+              onValueChange={(value) => setHeadache(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Breathing Difficulty</Text>
+            <Picker
+              selectedValue={breathingDifficulty}
+              onValueChange={(value) => setBreathingDifficulty(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Chest Pain</Text>
+            <Picker
+              selectedValue={chestPain}
+              onValueChange={(value) => setChestPain(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Muscle Stiffness</Text>
+            <Picker
+              selectedValue={muscleStiffness}
+              onValueChange={(value) => setMuscleStiffness(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Pain</Text>
+            <Picker
+              selectedValue={pain}
+              onValueChange={(value) => setPain(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Seizures</Text>
+            <Picker
+              selectedValue={seizures}
+              onValueChange={(value) => setSeizures(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Fatigue CP</Text>
+            <Picker
+              selectedValue={fatigueCp}
+              onValueChange={(value) => setFatigueCp(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <Text style={styles.label}>Breathing Difficulty CP</Text>
+            <Picker
+              selectedValue={breathingDifficultyCp}
+              onValueChange={(value) => setBreathingDifficultyCp(value)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No" value="0" />
+              <Picker.Item label="Yes" value="1" />
+            </Picker>
+
+            <TouchableOpacity
+              style={{
+                borderRadius: 10,
+                borderWidth: 0.2,
+                backgroundColor: "purple",
+                padding: 15,
+                marginVertical: 30,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onPress={handleSubmit}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+                Submit
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+  form: {
+    marginTop: 20,
+    paddingBottom: 200,
   },
-  headerText: {
+  label: {
+    fontSize: 14,
     fontWeight: "bold",
-    fontSize: 23,
-    marginStart: 10,
+    marginBottom: 5,
   },
-  appointmentCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    elevation: 7,
-    backgroundColor: "white",
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowRadius: 10,
-    shadowOpacity: 0.1,
-    borderRadius: 10,
-    marginStart: 20,
-    marginEnd: 20,
-    marginBottom: 20,
+  picker: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    marginBottom: 15,
   },
 });
