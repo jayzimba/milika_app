@@ -11,6 +11,10 @@ import { useEffect } from "react";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from "react-native-reanimated";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -22,6 +26,11 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    // This is the default configuration
+    configureReanimatedLogger({
+      level: ReanimatedLogLevel.warn,
+      strict: false, // Reanimated runs in strict mode by default
+    });
     if (loaded) {
       SplashScreen.hideAsync();
     }

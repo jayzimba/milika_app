@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import {
@@ -16,6 +19,7 @@ import {
   MaterialIcons,
   Entypo,
   Fontisto,
+  Ionicons,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/Colors";
@@ -25,10 +29,43 @@ import {
   BottomSheetView,
   BottomSheetModalProvider,
 } from "@gorhom/bottom-sheet";
+import { Picker } from "@react-native-picker/picker";
+import { useMemo } from "react";
+import * as SQLite from "expo-sqlite";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const [cough, setCough] = useState("0");
+  const [fever, setFever] = useState("0");
+  const [breath, setBreathingDifficulty] = useState("0");
+  const [loading, setLoading] = useState(false);
+  const [ChildData, setChildData] = useState([]);
+  const [child, setChild] = useState({});
+  // Memoize snap points
+  const snapPoints = useMemo(() => ["50%", "75%"], []);
   // Reference for BottomSheet
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+  // Initialize database
+  const initializeDatabase = async () => {
+    try {
+      const db = await SQLite.openDatabaseAsync("childApp.db");
+
+      // Check if any records exist
+      const fetchedRecords = await db.getAllAsync("SELECT * FROM children");
+      if (fetchedRecords.length > 0) {
+        setChildData(fetchedRecords);
+        setChild(fetchedRecords[0]);
+      }
+    } catch (error) {
+      console.error("Database initialization error:", error);
+    }
+  };
+
+  useEffect(() => {
+    initializeDatabase();
+  }, [ChildData]);
 
   // Show BottomSheet
   const handlePresentModalPress = useCallback(() => {
@@ -59,6 +96,15 @@ export default function HomeScreen() {
     frontColor: getColor(item.value),
   }));
 
+  const RecordVitals = () => {
+    setLoading(true);
+    // Simulate API call to save vitals
+    setTimeout(() => {
+      setLoading(false);
+      handleCloseModalPress();
+      Alert.alert(`Vitals recorded successfully!`);
+    }, 2000);
+  };
   const reminders = [
     {
       id: 1,
@@ -110,13 +156,17 @@ export default function HomeScreen() {
             colors={["red", "orange", "yellow"]}
             style={styles.gradientSection}
           >
-            <Text style={styles.gradientText}>Last Readings</Text>
+            <Text style={styles.gradientText}>{child.fullName}'s Vitals</Text>
             <View style={styles.gradientContent}>
               <View style={styles.readings}>
-                <Text style={{ color: Colors.light.white }}>Fever: 37.5°C</Text>
-                <Text style={{ color: Colors.light.white }}>Cough: Yes</Text>
                 <Text style={{ color: Colors.light.white }}>
-                  Shortness of Breath: No
+                  Fever: {fever}°C
+                </Text>
+                <Text style={{ color: Colors.light.white }}>
+                  Cough: {cough == "0" ? "No" : "Yes"}
+                </Text>
+                <Text style={{ color: Colors.light.white }}>
+                  Shortness of Breath: {breath == "0" ? "No" : "Yes"}
                 </Text>
               </View>
               <TouchableOpacity
@@ -191,7 +241,7 @@ export default function HomeScreen() {
         {/* BottomSheet */}
         <BottomSheetModal
           ref={bottomSheetModalRef}
-          snapPoints={["50%", "75%"]}
+          snapPoints={snapPoints}
           index={0}
           backgroundStyle={styles.bottomSheetBackground}
         >
@@ -217,6 +267,7 @@ export default function HomeScreen() {
                 <TextInput
                   placeholder="37.5"
                   keyboardType="numeric"
+                  onChangeText={(fever) => setFever(fever)}
                   style={{
                     padding: 10,
                     borderWidth: 0.5,
@@ -227,6 +278,84 @@ export default function HomeScreen() {
                   }}
                 />
               </View>
+              <View>
+                <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+                  Any Cough
+                </Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={cough}
+                    onValueChange={(value) => setCough(value)}
+                    style={styles.picker}
+                    itemStyle={{
+                      color: "black",
+                      fontSize: 14,
+                    }}
+                  >
+                    <Picker.Item label="No" value="0" />
+                    <Picker.Item label="Yes" value="1" />
+                  </Picker>
+                  {/* Dropdown arrow for iOS */}
+                  {Platform.OS === "ios" && (
+                    <Ionicons
+                      name="chevron-down"
+                      size={20}
+                      color="#000"
+                      style={styles.dropdownIcon}
+                    />
+                  )}
+                </View>
+              </View>
+              <View style={{ marginTop: 20 }}>
+                <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+                  Shortness of Breath
+                </Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={breath}
+                    onValueChange={(value) => setBreathingDifficulty(value)}
+                    style={styles.picker}
+                    itemStyle={{
+                      color: "black",
+                      fontSize: 14,
+                    }}
+                  >
+                    <Picker.Item label="No" value="0" />
+                    <Picker.Item label="Yes" value="1" />
+                  </Picker>
+                  {/* Dropdown arrow for iOS */}
+                  {Platform.OS === "ios" && (
+                    <Ionicons
+                      name="chevron-down"
+                      size={20}
+                      color="#000"
+                      style={styles.dropdownIcon}
+                    />
+                  )}
+                </View>
+              </View>
+            </View>
+
+            <View style={{ marginTop: 50, alignItems: "center" }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "purple",
+                  paddingVertical: 20,
+                  width: "90%",
+                  borderRadius: 10,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+                onPress={RecordVitals}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={{ color: "white", fontWeight: "bold" }}>
+                    Record Vitals
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
           </BottomSheetView>
         </BottomSheetModal>
@@ -325,5 +454,28 @@ const styles = StyleSheet.create({
   closeButton: {
     color: "blue",
     fontSize: 14,
+  },
+  pickerContainer: {
+    position: "relative",
+    width: "100%",
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    flexDirection: "row", // To position the dropdown arrow properly
+    alignItems: "center", // Vertically align Picker in the container
+    paddingHorizontal: 10, // Add some padding for spacing
+  },
+  picker: {
+    flex: 1, // Allow Picker to take up available space
+    color: "black",
+    fontSize: 14,
+  },
+  dropdownIcon: {
+    position: "absolute",
+    right: 10,
+    top: "50%",
+    transform: [{ translateY: -10 }],
   },
 });

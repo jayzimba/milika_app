@@ -23,7 +23,6 @@ export default function SignUp() {
     try {
       const db = await SQLite.openDatabaseAsync("childApp.db");
 
-      console.log("Database instance:", db);
 
       // Create table if it doesn't exist
       await db.execAsync(`
@@ -94,7 +93,6 @@ export default function SignUp() {
 
       // Fetch updated records and navigate
       const updatedChildren = await db.getAllAsync("SELECT * FROM children");
-      setChildren(updatedChildren);
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Error onboarding child:", error);
