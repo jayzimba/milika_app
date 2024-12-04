@@ -27,14 +27,22 @@ export default function SignUp() {
 
       // Create table if it doesn't exist
       await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS children (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, 
-          fullName TEXT NOT NULL, 
-          dob TEXT NOT NULL, 
-          age INTEGER NOT NULL, 
-          healthCondition TEXT NOT NULL
-        );
-      `);
+                          CREATE TABLE IF NOT EXISTS children (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                            fullName TEXT NOT NULL, 
+                            dob TEXT NOT NULL, 
+                            age INTEGER NOT NULL, 
+                            healthCondition TEXT NOT NULL
+                          );
+
+                          CREATE TABLE IF NOT EXISTS vitals (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                            fever FLOAT NOT NULL, 
+                            cough TEXT NOT NULL, 
+                            shortness_of_breath TEXT NOT NULL, 
+                            date_recorded DATE DEFAULT (CURRENT_DATE)
+                          );
+                        `);
 
       // Check if any records exist
       const existingChildren = await db.getAllAsync("SELECT * FROM children");

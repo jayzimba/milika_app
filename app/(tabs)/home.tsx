@@ -1,41 +1,43 @@
 import React, { useCallback, useRef } from "react";
 import {
-  Image,
   StyleSheet,
-  Platform,
   View,
   Text,
   SafeAreaView,
   TouchableOpacity,
-  Dimensions,
   ScrollView,
+  TextInput,
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import {
-  Ionicons,
   AntDesign,
   FontAwesome5,
-  Entypo,
   FontAwesome6,
   MaterialIcons,
+  Entypo,
   Fontisto,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/Colors";
 import Header from "@/components/Header";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
+import {
+  BottomSheetModal,
+  BottomSheetView,
+  BottomSheetModalProvider,
+} from "@gorhom/bottom-sheet";
 
 export default function HomeScreen() {
-  // ref
+  // Reference for BottomSheet
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
-  // callbacks
+  // Show BottomSheet
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index);
+
+  // Hide BottomSheet
+  const handleCloseModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.close();
   }, []);
 
   const getColor = (value: number) => {
@@ -97,142 +99,150 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView
-      style={{
-        paddingHorizontal: 10,
-        backgroundColor: "white",
-        flex: 1,
-        paddingVertical: 10,
-      }}
-    >
-      <Header />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Gradient Section */}
-        <LinearGradient
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          colors={["red", "orange", "yellow"]}
-          style={styles.gradientSection}
-        >
-          <Text style={{ color: "white", fontWeight: "bold" }}>
-            Last Readings
-          </Text>
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
+    <BottomSheetModalProvider>
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Gradient Section */}
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            colors={["red", "orange", "yellow"]}
+            style={styles.gradientSection}
           >
-            <View style={{ marginTop: 15, gap: 5 }}>
-              <Text style={{ color: Colors.light.white }}>Fever: 37.5°C</Text>
-              <Text style={{ color: Colors.light.white }}>Cough: Yes</Text>
-              <Text style={{ color: Colors.light.white }}>
-                Shortness of Breath: No
-              </Text>
-            </View>
-
-            <View>
-              <TouchableOpacity style={styles.addButton}>
+            <Text style={styles.gradientText}>Last Readings</Text>
+            <View style={styles.gradientContent}>
+              <View style={styles.readings}>
+                <Text style={{ color: Colors.light.white }}>Fever: 37.5°C</Text>
+                <Text style={{ color: Colors.light.white }}>Cough: Yes</Text>
+                <Text style={{ color: Colors.light.white }}>
+                  Shortness of Breath: No
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handlePresentModalPress}
+                style={styles.addButton}
+              >
                 <FontAwesome5 name="plus" size={20} color="purple" />
               </TouchableOpacity>
             </View>
+          </LinearGradient>
+
+          {/* Reminders Section */}
+          <View style={styles.remindersSection}>
+            <Text style={styles.sectionTitle}>
+              <AntDesign name="bells" size={16} color="black" /> Reminders
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.reminderList}
+            >
+              {reminders.map((reminder) => (
+                <View key={reminder.id} style={styles.reminderItem}>
+                  <TouchableOpacity
+                    style={[
+                      styles.reminderCard,
+                      { backgroundColor: reminder.color },
+                    ]}
+                  >
+                    {reminder.icon}
+                  </TouchableOpacity>
+                  <Text style={styles.reminderLabel}>{reminder.label}</Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
-        </LinearGradient>
 
-        {/* Reminders Section */}
-        <View style={{ marginBottom: 30, paddingEnd: 20 }}>
-          <Text
-            style={{ marginStart: 20, fontWeight: "bold", marginBottom: 10 }}
-          >
-            <AntDesign name="bells" size={16} color="black" /> Reminders
-          </Text>
-
-          <ScrollView
-            horizontal
-            style={{ marginVertical: 10, marginStart: 20 }}
-            showsHorizontalScrollIndicator={false}
-          >
-            {reminders.map((reminder) => (
-              <View key={reminder.id} style={{ alignItems: "center", gap: 5 }}>
-                <TouchableOpacity
-                  style={[
-                    styles.reminderCard,
-                    { backgroundColor: reminder.color },
-                  ]}
-                >
-                  {reminder.icon}
-                </TouchableOpacity>
-                <Text
-                  style={{
-                    color: Colors.light.text,
-                    fontSize: 12,
-                    fontWeight: "300",
-                  }}
-                >
-                  {reminder.label}
+          {/* Next Appointment Section */}
+          <View>
+            <Text style={styles.sectionTitle}>Next Appointment</Text>
+            <View style={styles.appointmentCard}>
+              <View>
+                <Text style={{ color: Colors.light.icon }}>
+                  Date: March 15, 2022
                 </Text>
+                <Text style={{ color: Colors.light.icon }}>Time: 09:00 AM</Text>
               </View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Next Appointment Section */}
-        <View>
-          <Text
-            style={{ marginStart: 20, fontWeight: "bold", marginBottom: 20 }}
-          >
-            Next Appointment
-          </Text>
-          <View style={styles.appointmentCard}>
-            <View style={{ gap: 10 }}>
-              <Text style={{ color: Colors.light.icon }}>
-                Date: March 15, 2022
-              </Text>
-              <Text style={{ color: Colors.light.icon }}>Time: 09:00 AM</Text>
+              <Text style={{ color: "black" }}>Doctor: Dr. John Doe</Text>
             </View>
-            <Text style={{ color: "black" }}>Doctor: Dr. John Doe</Text>
           </View>
-        </View>
 
-        {/* Bar Chart Section */}
-        <View style={{ flex: 1 }}>
-          <View style={{ marginVertical: 10, marginStart: 20 }}>
-            <Text style={{ fontWeight: "bold" }}>Daily Severity Report</Text>
+          {/* Bar Chart Section */}
+          <View>
+            <Text style={styles.sectionTitle}>Daily Severity Report</Text>
+            <BarChart
+              horizontal
+              barWidth={18}
+              barBorderRadius={5}
+              frontColor="lightgray"
+              data={barData}
+              yAxisThickness={0}
+              xAxisThickness={0}
+              maxValue={50}
+              stepValue={10}
+              showValuesAsTopLabel
+              stepHeight={65}
+              barBorderWidth={0}
+            />
           </View>
-          <BarChart
-            horizontal
-            barWidth={18}
-            barBorderRadius={5}
-            frontColor="lightgray"
-            data={barData}
-            yAxisThickness={0}
-            xAxisThickness={0}
-            maxValue={50}
-            stepValue={10}
-            showValuesAsTopLabel
-            stepHeight={65}
-            barBorderWidth={0}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+
+        {/* BottomSheet */}
+        <BottomSheetModal
+          ref={bottomSheetModalRef}
+          snapPoints={["50%", "75%"]}
+          index={0}
+          backgroundStyle={styles.bottomSheetBackground}
+        >
+          <BottomSheetView style={styles.contentContainer}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Text style={styles.sheetContent}>Add Vitals readings</Text>
+              <TouchableOpacity onPress={handleCloseModalPress}>
+                <Text style={styles.closeButton}>Close</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ gap: 5, marginTop: 25 }}>
+              <View>
+                <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+                  Temperature (°C)
+                </Text>
+                <TextInput
+                  placeholder="37.5"
+                  keyboardType="numeric"
+                  style={{
+                    padding: 10,
+                    borderWidth: 0.5,
+                    borderColor: "gray",
+                    borderRadius: 5,
+                    marginBottom: 20,
+                    color: "grey",
+                  }}
+                />
+              </View>
+            </View>
+          </BottomSheetView>
+        </BottomSheetModal>
+      </SafeAreaView>
+    </BottomSheetModalProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    gap: 8,
-    marginStart: 10,
-    marginTop: 10,
-  },
-  headerText: {
-    fontWeight: "bold",
-    fontSize: 18,
-    color: "purple",
-  },
-  subText: {
-    fontSize: 12,
-    color: "#687076",
+  container: {
+    paddingHorizontal: 10,
+    backgroundColor: "white",
+    flex: 1,
+    paddingVertical: 10,
   },
   gradientSection: {
-    justifyContent: "space-between",
     padding: 20,
     backgroundColor: Colors.light.primary,
     margin: 10,
@@ -244,18 +254,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
+  gradientText: { color: "white", fontWeight: "bold" },
+  gradientContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  readings: { marginTop: 15, gap: 5 },
   addButton: {
-    borderRadius: 100,
-    padding: 20,
-    borderWidth: 0.6,
-    borderColor: "white",
+    borderRadius: 90,
+    padding: 10,
+    width: 50,
+    height: 50,
     backgroundColor: "white",
     elevation: 7,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    justifyContent: "center",
+    alignItems: "center",
   },
+  remindersSection: { marginBottom: 30, paddingEnd: 20 },
+  sectionTitle: { marginStart: 20, fontWeight: "bold", marginBottom: 10 },
+  reminderList: { marginVertical: 10, marginStart: 20 },
+  reminderItem: { alignItems: "center", gap: 5 },
   reminderCard: {
     width: 50,
     height: 50,
@@ -263,6 +285,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
     marginHorizontal: 10,
+  },
+  reminderLabel: {
+    color: Colors.light.text,
+    fontSize: 12,
+    fontWeight: "300",
   },
   appointmentCard: {
     flexDirection: "row",
@@ -275,8 +302,28 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOpacity: 0.1,
     borderRadius: 10,
-    marginStart: 20,
-    marginEnd: 20,
+    marginHorizontal: 20,
     marginBottom: 20,
+  },
+  bottomSheetBackground: {
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 }, // Shadow at the top of the BottomSheet
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  sheetContent: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "purple",
+  },
+  closeButton: {
+    color: "blue",
+    fontSize: 14,
   },
 });
