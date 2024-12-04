@@ -23,7 +23,6 @@ export default function SignUp() {
     try {
       const db = await SQLite.openDatabaseAsync("childApp.db");
 
-
       // Create table if it doesn't exist
       await db.execAsync(`
                           CREATE TABLE IF NOT EXISTS children (
@@ -40,6 +39,20 @@ export default function SignUp() {
                             cough TEXT NOT NULL, 
                             shortness_of_breath TEXT NOT NULL, 
                             date_recorded DATE DEFAULT (CURRENT_DATE)
+                          );
+
+                          CREATE TABLE IF NOT EXISTS Doctor (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                            name TEXT NOT NULL, 
+                            phone TEXT NOT NULL, 
+                            email TEXT NOT NULL, 
+                            hospital TEXT
+                          );
+
+                          CREATE TABLE IF NOT EXISTS Alerts (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                            description FLOAT NOT NULL, 
+                            date_time DATETIME NOT NULL
                           );
                         `);
 
