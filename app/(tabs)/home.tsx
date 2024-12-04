@@ -150,9 +150,8 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
           >
             {reminders.map((reminder) => (
-              <View style={{ alignItems: "center", gap: 5 }}>
+              <View key={reminder.id} style={{ alignItems: "center", gap: 5 }}>
                 <TouchableOpacity
-                  key={reminder.id}
                   style={[
                     styles.reminderCard,
                     { backgroundColor: reminder.color },
