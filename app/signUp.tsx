@@ -52,7 +52,9 @@ export default function SignUp() {
                           CREATE TABLE IF NOT EXISTS Alerts (
                             id INTEGER PRIMARY KEY AUTOINCREMENT, 
                             description FLOAT NOT NULL, 
-                            date_time DATETIME NOT NULL
+                            Alert_time TIME NOT NULL,
+                            Alert_date DATE NOT NULL,
+                            status INTEGER DEFAULT (1)
                           );
                         `);
 

@@ -10,6 +10,8 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  FlatList,
+  Button,
 } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 import {
@@ -20,6 +22,7 @@ import {
   Entypo,
   Fontisto,
   Ionicons,
+  FontAwesome,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/Colors";
@@ -34,18 +37,83 @@ import { useMemo } from "react";
 import * as SQLite from "expo-sqlite";
 import { useRouter } from "expo-router";
 
+const ReminderItem = (props: {
+  passed: boolean;
+  date: string;
+  title: string;
+  time: string;
+}) => {
+  const { passed, date, title, time } = props;
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingEnd: 15,
+      }}
+    >
+      <View style={styles.teminderCard}>
+        <View style={{ gap: 10, flexDirection: "row", alignItems: "center" }}>
+          <View>
+            {passed ? (
+              <FontAwesome name="bell-o" size={20} color={Colors.light.icon} />
+            ) : (
+              <FontAwesome name="bell" size={20} color="black" />
+            )}
+          </View>
+          <View style={{ gap: 10 }}>
+            <Text style={{ color: "black" }}>set: {date}</Text>
+            <Text style={{ color: Colors.light.icon, fontWeight: "400" }}>
+              {title}
+            </Text>
+          </View>
+        </View>
+        <View>
+          <Text
+            style={{
+              color: "black",
+              fontWeight: "bold",
+              fontSize: 12,
+            }}
+          >
+            {time}
+          </Text>
+        </View>
+      </View>
+
+      <View>
+        <TouchableOpacity style={{}}>
+          <FontAwesome name="edit" size={24} color="black" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 export default function HomeScreen() {
   const router = useRouter();
-  const [cough, setCough] = useState("0");
-  const [fever, setFever] = useState("0");
-  const [breath, setBreathingDifficulty] = useState("0");
+  const [vitals, setVitals] = useState([
+    { fever: 0, cough: "0", shortness_of_breath: "0" },
+  ]);
+  const [cough, setCough] = useState(vitals[0].fever);
+  const [fever, setFever] = useState(vitals[0].cough);
+  const [breath, setBreathingDifficulty] = useState(
+    vitals[0].shortness_of_breath
+  );
   const [loading, setLoading] = useState(false);
   const [ChildData, setChildData] = useState([]);
   const [child, setChild] = useState({});
+  const [refreshKey, setRefreshKey] = useState(0); // Add this state
+  const [description, setDescription] = useState("");
+  const [alertTime, setAlertTime] = useState("");
+  const [alertDate, setAlertDate] = useState("");
+  const [AlertsData, setAlertsData] = useState([]);
   // Memoize snap points
   const snapPoints = useMemo(() => ["50%", "75%"], []);
   // Reference for BottomSheet
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetModalRef_reminders = useRef<BottomSheetModal>(null);
 
   // Initialize database
   const initializeDatabase = async () => {
@@ -54,18 +122,91 @@ export default function HomeScreen() {
 
       // Check if any records exist
       const fetchedRecords = await db.getAllAsync("SELECT * FROM children");
+      const fetchedRecords_vitals = await db.getAllAsync(
+        "SELECT * FROM vitals ORDER BY id DESC LIMIT 1"
+      );
+      const fetchedRecords_alerts = await db.getAllAsync(
+        "SELECT * FROM Alerts ORDER BY Alert_time DESC"
+      );
+
       if (fetchedRecords.length > 0) {
         setChildData(fetchedRecords);
         setChild(fetchedRecords[0]);
       }
+      if (fetchedRecords_vitals.length > 0) {
+        setVitals(fetchedRecords_vitals);
+      }
+      if (fetchedRecords_alerts.length > 0) {
+        setAlertsData(fetchedRecords_alerts);
+      }
+
+      console.log(AlertsData);
     } catch (error) {
       console.error("Database initialization error:", error);
     }
   };
 
+  // Handle form submission
+  const RecordVitals = async () => {
+    setLoading(false);
+    handleCloseModalPress();
+    try {
+      const db = await SQLite.openDatabaseAsync("childApp.db");
+
+      // Insert data into the database
+      await db.runAsync(
+        "INSERT INTO vitals (fever, cough, shortness_of_breath) VALUES (?, ?, ?);",
+        [fever, cough, breath]
+      );
+
+      Alert.alert("Success", "Vitals Recorded successfully!");
+      setFever("");
+      setBreathingDifficulty("0");
+      setCough("0");
+
+      // Fetch updated records and navigate
+    } catch (error) {
+      console.error("Error:", error);
+      Alert.alert("Error", "Failed to record vitals.");
+    } finally {
+      setRefreshKey((prev) => prev + 1);
+      setLoading(false);
+    }
+  };
+
+  const handleSaveAlert = async () => {
+    setLoading(true);
+    if (!description || !alertTime || !alertDate) {
+      Alert.alert("Error", "All fields are required!");
+      return;
+    }
+
+    try {
+      const db = await SQLite.openDatabaseAsync("childApp.db");
+
+      // Insert data into the database
+      await db.runAsync(
+        `INSERT INTO Alerts (description, Alert_time, Alert_date) VALUES (?, ?, ?)`,
+        [description, alertTime, alertDate]
+      );
+
+      setDescription("");
+      setAlertTime("");
+      setAlertDate("");
+
+      // Fetch updated records and navigate
+    } catch (error) {
+      console.error("Error:", error);
+      Alert.alert("Error", "Failed to save notification.");
+    } finally {
+      setRefreshKey((prev) => prev + 1);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     initializeDatabase();
-  }, [ChildData]);
+  }, [refreshKey]);
 
   // Show BottomSheet
   const handlePresentModalPress = useCallback(() => {
@@ -75,6 +216,16 @@ export default function HomeScreen() {
   // Hide BottomSheet
   const handleCloseModalPress = useCallback(() => {
     bottomSheetModalRef.current?.close();
+  }, []);
+
+  // Show BottomSheet
+  const handlePresentModalPress_reminders = useCallback(() => {
+    bottomSheetModalRef_reminders.current?.present();
+  }, []);
+
+  // Hide BottomSheet
+  const handleCloseModalPress_reminders = useCallback(() => {
+    bottomSheetModalRef_reminders.current?.close();
   }, []);
 
   const getColor = (value: number) => {
@@ -96,15 +247,59 @@ export default function HomeScreen() {
     frontColor: getColor(item.value),
   }));
 
-  const RecordVitals = () => {
-    setLoading(true);
-    // Simulate API call to save vitals
-    setTimeout(() => {
-      setLoading(false);
-      handleCloseModalPress();
-      Alert.alert(`Vitals recorded successfully!`);
-    }, 2000);
+  const checkSeverity = () => {
+    // Initialize the default color
+    let color = "green";
+
+    // Destructure vitals for readability
+    const { fever, cough, shortness_of_breath } = vitals[0];
+
+    // Logic for determining severity
+    if (
+      fever >= 39 ||
+      shortness_of_breath === "1" ||
+      (fever >= 38 && cough === "1")
+    ) {
+      color = "red"; // Life-threatening
+    } else if (
+      (fever >= 38 && fever < 39) ||
+      cough === "1" ||
+      shortness_of_breath === "0"
+    ) {
+      color = "orange"; // Severe
+    } else if (fever >= 37 || cough === "1") {
+      color = "yellow"; // Moderate
+    } else {
+      color = "green"; // Mild
+    }
+
+    return color;
   };
+
+  const remindersSample = [
+    {
+      id: 1,
+      date: "March 15, 2022",
+      title: "Medication Reminder",
+      time: "09:00 AM",
+      passed: true,
+    },
+    {
+      id: 2,
+      date: "March 15, 2022",
+      title: "Medication Reminder",
+      time: "12:00 AM",
+      passed: false,
+    },
+    {
+      id: 3,
+      date: "March 15, 2022",
+      title: "Medication Reminder",
+      time: "20:00 PM",
+      passed: false,
+    },
+  ];
+
   const reminders = [
     {
       id: 1,
@@ -153,20 +348,24 @@ export default function HomeScreen() {
           <LinearGradient
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            colors={["red", "orange", "yellow"]}
+            colors={[
+              checkSeverity() == "yellow" ? "green" : checkSeverity(),
+              checkSeverity(),
+            ]}
             style={styles.gradientSection}
           >
             <Text style={styles.gradientText}>{child.fullName}'s Vitals</Text>
             <View style={styles.gradientContent}>
               <View style={styles.readings}>
                 <Text style={{ color: Colors.light.white }}>
-                  Fever: {fever}°C
+                  Fever: {vitals[0].fever}°C
                 </Text>
                 <Text style={{ color: Colors.light.white }}>
-                  Cough: {cough == "0" ? "No" : "Yes"}
+                  Cough: {vitals[0].cough == "0" ? "No" : "Yes"}
                 </Text>
                 <Text style={{ color: Colors.light.white }}>
-                  Shortness of Breath: {breath == "0" ? "No" : "Yes"}
+                  Shortness of Breath:{" "}
+                  {vitals[0].shortness_of_breath == "0" ? "No" : "Yes"}
                 </Text>
               </View>
               <TouchableOpacity
@@ -195,6 +394,10 @@ export default function HomeScreen() {
                       styles.reminderCard,
                       { backgroundColor: reminder.color },
                     ]}
+                    onPress={() => {
+                      handlePresentModalPress_reminders();
+                      setDescription(reminder.label);
+                    }}
                   >
                     {reminder.icon}
                   </TouchableOpacity>
@@ -217,26 +420,100 @@ export default function HomeScreen() {
               <Text style={{ color: "black" }}>Doctor: Dr. John Doe</Text>
             </View>
           </View>
-
-          {/* Bar Chart Section */}
+          {/* Next alert Section */}
           <View>
-            <Text style={styles.sectionTitle}>Daily Severity Report</Text>
-            <BarChart
-              horizontal
-              barWidth={18}
-              barBorderRadius={5}
-              frontColor="lightgray"
-              data={barData}
-              yAxisThickness={0}
-              xAxisThickness={0}
-              maxValue={50}
-              stepValue={10}
-              showValuesAsTopLabel
-              stepHeight={65}
-              barBorderWidth={0}
-            />
+            <Text style={styles.sectionTitle}>Alerts</Text>
+
+            {AlertsData.map((item) => (
+              <ReminderItem
+                key={item.id}
+                passed={item.status}
+                date={item.Alert_date}
+                title={item.description}
+                time={item.Alert_time}
+              />
+            ))}
           </View>
         </ScrollView>
+
+        <BottomSheetModal
+          ref={bottomSheetModalRef_reminders}
+          snapPoints={snapPoints}
+          index={0}
+          backgroundStyle={styles.bottomSheetBackground}
+        >
+          <BottomSheetView style={styles.contentContainer}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 30,
+              }}
+            >
+              <Text style={styles.sheetContent}>Add Reminder</Text>
+              <TouchableOpacity onPress={handleCloseModalPress_reminders}>
+                <Text style={styles.closeButton}>Close</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View>
+              <Text style={styles.label}>Alert Description:</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: "#ededed" }]}
+                keyboardType="default"
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Enter description"
+                editable={false}
+              />
+
+              <Text style={styles.label}>Alert Time (HH:MM:SS):</Text>
+              <TextInput
+                style={styles.input}
+                value={alertTime}
+                onChangeText={setAlertTime}
+                placeholder="Enter time (e.g., 14:30:00)"
+              />
+
+              <Text style={styles.label}>Alert Date (YYYY-MM-DD):</Text>
+              <TextInput
+                style={styles.input}
+                value={alertDate}
+                onChangeText={setAlertDate}
+                placeholder="Enter date (e.g., 2024-12-05)"
+              />
+
+              <View style={{ marginTop: 50, alignItems: "center" }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "purple",
+                    paddingVertical: 20,
+                    width: "90%",
+                    borderRadius: 10,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={handleSaveAlert}
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text
+                      style={{
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: 16,
+                      }}
+                    >
+                      Save Alert
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BottomSheetView>
+        </BottomSheetModal>
 
         {/* BottomSheet */}
         <BottomSheetModal
@@ -351,7 +628,9 @@ export default function HomeScreen() {
                 {loading ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text style={{ color: "white", fontWeight: "bold" }}>
+                  <Text
+                    style={{ color: "white", fontWeight: "bold", fontSize: 16 }}
+                  >
                     Record Vitals
                   </Text>
                 )}
@@ -477,5 +756,34 @@ const styles = StyleSheet.create({
     right: 10,
     top: "50%",
     transform: [{ translateY: -10 }],
+  },
+  teminderCard: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    elevation: 7,
+    backgroundColor: "white",
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    shadowOpacity: 0.1,
+    borderRadius: 10,
+    marginStart: 20,
+    marginEnd: 20,
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginVertical: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    color: "gray",
   },
 });

@@ -42,7 +42,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="reminders"
         options={{
           title: "Reminders",
@@ -54,7 +54,7 @@ export default function TabLayout() {
             />
           ),
         }}
-      />
+      /> */}
 
       <Tabs.Screen
         name="Doctor"

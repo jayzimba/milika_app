@@ -10,7 +10,6 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,

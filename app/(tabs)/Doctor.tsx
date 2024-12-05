@@ -94,15 +94,7 @@ export default function DoctorScreen() {
       await db.runAsync("DELETE FROM Doctor;");
 
       Alert.alert("Success", "Doctor records deleted successfully!");
-      setDoctorName("");
-      setDoctorNumber("");
-      setEmail("");
-      setHospitalName("");
-
       setRefreshKey((prev) => prev + 1);
-
-      // Fetch updated records and navigate
-      const updatedChildren = await db.getAllAsync("SELECT * FROM children");
     } catch (error) {
       console.error("Error onboarding Doctor:", error);
       Alert.alert("Error", "Failed to delete the Doctor.");
