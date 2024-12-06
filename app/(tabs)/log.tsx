@@ -11,6 +11,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { LinearGradient } from "expo-linear-gradient";
+import { Colors } from "@/constants/Colors";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 export default function LogScreen() {
   // State variables for each input field
@@ -26,6 +29,10 @@ export default function LogScreen() {
   const [seizures, setSeizures] = useState("0");
   const [fatigueCp, setFatigueCp] = useState("0");
   const [breathingDifficultyCp, setBreathingDifficultyCp] = useState("0");
+
+  const [colorCode, setColorCode] = useState("green");
+  const [diagnosisLeveles, setDiagnosisLeveles] = useState("0");
+  const [severityLeveles, setSeverityLeveles] = useState("0");
 
   // Function to handle form submission
   const handleSubmit = () => {
@@ -55,8 +62,13 @@ export default function LogScreen() {
       .then((responseData) => {
         Alert.alert(
           "Prediction",
-          `Diagnosis: ${responseData.diagnosis}\nSeverity: ${responseData.severity}`
+          `Diagnosis: ${responseData.diagnosis}\n${responseData.severity}`
         );
+
+        setColorCode(responseData.severity);
+        setDiagnosisLeveles(responseData.confidence.diagnosis);
+        setSeverityLeveles(responseData.confidence.severity);
+        console.log(responseData);
       })
       .catch((error) => {
         Alert.alert("Error", "Failed to get prediction. Please try again.");
@@ -76,6 +88,44 @@ export default function LogScreen() {
             Complete the form below to get predictions and recommendations for
             your child.
           </Text>
+
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            colors={[colorCode, colorCode, "yellow"]}
+            style={styles.gradientSection}
+          >
+            <View style={styles.gradientContent}>
+              <View
+                style={{
+                  
+                  borderRadius: 5,
+                  gap: 3,
+                }}
+              >
+                <Text
+                  style={{
+                    backgroundColor: "white",
+                    padding: 5,
+                    borderRadius: 5,
+                    gap: 3,
+                  }}
+                >
+                  Confidence Levels: {parseFloat(severityLeveles) * 100}%
+                </Text>
+                <Text
+                  style={{
+                    backgroundColor: "white",
+                    padding: 5,
+                    borderRadius: 5,
+                    gap: 3,
+                  }}
+                >
+                  Confidence Levels: {parseFloat(diagnosisLeveles) * 100}%
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -229,6 +279,23 @@ export default function LogScreen() {
 }
 
 const styles = StyleSheet.create({
+  gradientSection: {
+    padding: 20,
+    backgroundColor: Colors.light.primary,
+    margin: 10,
+    borderRadius: 20,
+    marginVertical: 20,
+    elevation: 7,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  gradientText: { color: "white", fontWeight: "bold" },
+  gradientContent: {
+    flexDirection: "row",
+    gap: 20,
+  },
   form: {
     marginTop: 20,
     paddingBottom: 200,
