@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   },
   form: {
     marginTop: 20,
-    paddingBottom: 200,
+    paddingBottom: 300,
   },
   label: {
     fontSize: 14,
